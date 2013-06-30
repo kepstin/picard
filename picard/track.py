@@ -50,6 +50,7 @@ class Track(DataObject, Item):
         self.linked_files = []
         self.num_linked_files = 0
         self.metadata = Metadata()
+        self.orig_metadata = Metadata()
         self._track_artists = []
 
     def __repr__(self):
@@ -65,8 +66,20 @@ class Track(DataObject, Item):
     def update_file_metadata(self, file):
         if file not in self.linked_files:
             return
-        file.copy_metadata(self.metadata)
+        file.copy_metadata(self.orig_metadata)
         file.metadata['~extension'] = file.orig_metadata['~extension']
+        # Prepare parser for user's script
+        if self.config.setting["enable_tagger_script"]:
+            script = self.config.setting["tagger_script"]
+            if script:
+                parser = ScriptParser()
+                # Run tagger script over the merged metadata
+                try:
+                    parser.eval(script, file.metadata)
+                except:
+                    self.log.error(traceback.format_exc())
+                # Strip leading/trailing whitespace
+                file.metadata.strip_whitespace()
         file.metadata.changed = True
         file.update(signal=False)
         self.update()
@@ -275,6 +288,8 @@ class NonAlbumTrack(Track):
         recording_to_metadata(recording, m, self)
         self._customize_metadata()
         run_track_metadata_processors(self.album, m, None, recording)
+        self.orig_metadata.copy(m)
+
         if config.setting["enable_tagger_script"]:
             script = config.setting["tagger_script"]
             if script:
