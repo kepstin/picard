@@ -99,6 +99,14 @@ class ID3File(File):
     __upgrade = {
         'XSOP': 'TSOP',
         'TXXX:ALBUMARTISTSORT': 'TSO2',
+        # These tags are generated incorrectly by some re-encoding software.
+        # Accept them for user convenience.
+        'TXXX:MUSICBRAINZ_ALBUMID': 'TXXX:MusicBrainz Album Id',
+        'TXXX:MUSICBRAINZ_ALBUMARTISTID': 'TXXX:MusicBrainz Album Artist Id',
+        'TXXX:MUSICBRAINZ_ARTISTID': 'TXXX:MusicBrainz Artist Id',
+        'TXXX:MUSICBRAINZ_RELEASEGROUPID': 'TXXX:MusicBrainz Release Group Id',
+        'TXXX:MUSICBRAINZ_TRACKID': 'UFID:http://musicbrainz.org',
+        'TXXX:MUSICBRAINZ_WORKID': 'TXXX:MusicBrainz Work Id',
     }
 
     __translate = {
