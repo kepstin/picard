@@ -68,17 +68,22 @@ class Track(DataObject, Item):
             return
         file.copy_metadata(self.orig_metadata)
         file.metadata['~extension'] = file.orig_metadata['~extension']
-        # Prepare parser for user's script
+
+        if self.num_linked_files == 1:
+            self.metadata.copy(file.metadata)
+        else:
+            self.metadata.copy(self.orig_metadata)
+
+        # Run tagger script over the merged metadata
         if self.config.setting["enable_tagger_script"]:
             script = self.config.setting["tagger_script"]
             if script:
                 parser = ScriptParser()
-                # Run tagger script over the merged metadata
                 try:
                     parser.eval(script, file.metadata)
+                    parser.eval(script, self.metadata)
                 except:
                     self.log.error(traceback.format_exc())
-                # Strip leading/trailing whitespace
                 file.metadata.strip_whitespace()
         file.metadata.changed = True
         file.update(signal=False)
@@ -91,6 +96,23 @@ class Track(DataObject, Item):
         self.num_linked_files -= 1
         file.copy_metadata(file.orig_metadata)
         self.album._remove_file(self, file)
+
+        if self.num_linked_files == 1:
+            self.metadata.copy(self.linked_files[0].orig_metadata)
+        else:
+            self.metadata.copy(self.orig_metadata)
+
+        # Have to re-run the tagger script on the track metadata to
+        # bring it back to the expected state
+        if self.config.setting["enable_tagger_script"]:
+            script = self.config.setting["tagger_script"]
+            if script:
+                parser = ScriptParser()
+                try:
+                    parser.eval(script, self.metadata)
+                except:
+                    self.log.error(traceback.format_exc())
+                self.metadata.strip_whitespace()
         self.update()
 
     def update(self):
