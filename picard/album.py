@@ -254,13 +254,16 @@ class Album(DataObject, Item):
                 if len(artists) > 1:
                     track.metadata["~multiartist"] = "1"
 
-                track.orig_metadata.copy(track.metadata)
 
             del self._release_node
             self._tracks_loaded = True
 
         if not self._requests:
-            # Prepare parser for user's script
+            # Save the track original metadata
+            for track in self._new_tracks:
+                track.orig_metadata.copy(track.metadata)
+
+            # Run the user's script over the tracks and album metadata
             if config.setting["enable_tagger_script"]:
                 script = config.setting["tagger_script"]
                 if script:
